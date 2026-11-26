@@ -76,15 +76,15 @@ jobs:
           )
           replace_once(
               """            if (strike == 2) {
-                  Vec3d knockback = target.getEntityPos().subtract(player.getEntityPos()).normalize();
-                  target.setVelocity(knockback.multiply(0.65).add(0, 0.2, 0));
-                  target.velocityDirty = true;
-              }""",
+                          Vec3d knockback = target.getEntityPos().subtract(player.getEntityPos()).normalize();
+                          target.setVelocity(knockback.multiply(0.65).add(0, 0.2, 0));
+                          target.velocityDirty = true;
+                      }""",
               """            Vec3d knockback = target.getEntityPos().subtract(player.getEntityPos());
-              Vec3d horizontal = new Vec3d(knockback.x, 0, knockback.z).normalize();
-              if (horizontal.lengthSquared() < 1.0E-4) horizontal = facing;
-              target.setVelocity(horizontal.multiply(0.55).add(0, 0.72, 0));
-              target.velocityDirty = true;""",
+                      Vec3d horizontal = new Vec3d(knockback.x, 0, knockback.z).normalize();
+                      if (horizontal.lengthSquared() < 1.0E-4) horizontal = facing;
+                      target.setVelocity(horizontal.multiply(0.55).add(0, 0.72, 0));
+                      target.velocityDirty = true;""",
               "Apply upward knockback on all three chain strikes"
           )
           replace_once(
@@ -122,18 +122,18 @@ jobs:
           )
           replace_once(
               """            BossBalance.applyTieredDamage(world, target, player.getDamageSources().playerAttack(player),
-                  GabrielEntity.CRASH_BASE_DAMAGE, BossBalance.AttackTier.ULTIMATE);""",
+                          GabrielEntity.CRASH_BASE_DAMAGE, BossBalance.AttackTier.ULTIMATE);""",
               """            BossBalance.applyTieredDamage(world, target, player.getDamageSources().playerAttack(player),
-                  28.0f, BossBalance.AttackTier.ULTIMATE);""",
+                          28.0f, BossBalance.AttackTier.ULTIMATE);""",
               "Increase Divine Descent damage"
           )
           replace_once(
               """            if (entity instanceof PlayerEntity player) {
-                      player.stopUsingItem();
-                      Vec3d locked = state.origin;""",
+                          player.stopUsingItem();
+                          Vec3d locked = state.origin;""",
               """            if (entity instanceof PlayerEntity player) {
-                      // Keep the player immobilized, but do not cancel item use (food, potions, etc.).
-                      Vec3d locked = state.origin;""",
+                          // Keep the player immobilized, but do not cancel item use (food, potions, etc.).
+                          Vec3d locked = state.origin;""",
               "Allow stunned players to continue eating"
           )
           manager.write_text(source)
