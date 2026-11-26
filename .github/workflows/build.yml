@@ -18,6 +18,8 @@ jobs:
         run: |
           unzip -q spartanboss-1.1.0-balanced-source.zip
           test -f spartanboss_src/build.gradle
+          sed -i 's/com\\.geckolib/software.bern ie.geckolib/g' spartanboss_src/build.gradle
+          sed -i 's/software.bern ie.geckolib/software.bernie.geckolib/g' spartanboss_src/build.gradle
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
