@@ -53,6 +53,110 @@ jobs:
               path = root / name
               text = path.read_text().replace("ParticleTypes.FLASH", "ParticleTypes.END_ROD")
               path.write_text(text)
+
+          manager = root / "WeaponAbilityManager.java"
+          source = manager.read_text()
+
+          def replace_once(old, new, description):
+              global source
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f"{description}: expected exactly one match, found {count}")
+              source = source.replace(old, new, 1)
+
+          replace_once(
+              "private static final int DIVINE_DESCENT_FLIGHT_TICKS = 100;",
+              "private static final int DIVINE_DESCENT_FLIGHT_TICKS = 40;",
+              "Set Divine Descent to 2 seconds"
+          )
+          replace_once(
+              "float damage = strike == 2 ? 9.0f : 7.0f;",
+              "float damage = 9.0f; // Sharpness V equivalent for the Chains of Chaos",
+              "Set three chain strikes to Sharpness V damage"
+          )
+          replace_once(
+              """            if (strike == 2) {
+                  Vec3d knockback = target.getEntityPos().subtract(player.getEntityPos()).normalize();
+                  target.setVelocity(knockback.multiply(0.65).add(0, 0.2, 0));
+                  target.velocityDirty = true;
+              }""",
+              """            Vec3d knockback = target.getEntityPos().subtract(player.getEntityPos());
+              Vec3d horizontal = new Vec3d(knockback.x, 0, knockback.z).normalize();
+              if (horizontal.lengthSquared() < 1.0E-4) horizontal = facing;
+              target.setVelocity(horizontal.multiply(0.55).add(0, 0.72, 0));
+              target.velocityDirty = true;""",
+              "Apply upward knockback on all three chain strikes"
+          )
+          replace_once(
+              "player.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, SPARTAN_FURY_TICKS, 1, false, false));",
+              "player.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, SPARTAN_FURY_TICKS, 2, false, false));",
+              "Increase Spartan Fury strength"
+          )
+          replace_once(
+              """        Vec3d travel = lastSafe.subtract(start);
+                  if (travel.lengthSquared() > 0.01) {
+                      player.requestTeleport(lastSafe.x, lastSafe.y, lastSafe.z);""",
+              """        Vec3d travel = lastSafe.subtract(start);
+                  if (travel.lengthSquared() > 0.01) {
+                      // Sweep the dash corridor so targets along the full 15-block burst are hit,
+                      // not only entities at the destination.
+                      Box sweptArea = player.getBoundingBox()
+                          .union(player.getBoundingBox().offset(travel)).expand(1.5);
+                      for (LivingEntity target : world.getEntitiesByClass(LivingEntity.class, sweptArea,
+                              entity -> entity != player && entity.isAlive() && !player.isTeammate(entity)
+                                  && (!(entity instanceof PlayerEntity p) || (!p.isCreative() && !p.isSpectator())))) {
+                          Vec3d targetCenter = target.getEntityPos().add(0, target.getHeight() * 0.5, 0);
+                          Vec3d relative = targetCenter.subtract(start);
+                          double along = Math.max(0.0, Math.min(1.0, relative.dotProduct(travel) / travel.lengthSquared()));
+                          Vec3d nearest = start.add(travel.multiply(along));
+                          if (targetCenter.squaredDistanceTo(nearest) > 6.25) continue;
+                          target.damage(world, player.getDamageSources().playerAttack(player), 14.0f);
+                          Vec3d push = target.getEntityPos().subtract(start);
+                          Vec3d horizontal = new Vec3d(push.x, 0, push.z).normalize();
+                          if (horizontal.lengthSquared() < 1.0E-4) horizontal = new Vec3d(direction.x, 0, direction.z).normalize();
+                          target.setVelocity(horizontal.multiply(1.75).add(0, 0.65, 0));
+                          target.velocityDirty = true;
+                      }
+                      player.requestTeleport(lastSafe.x, lastSafe.y, lastSafe.z);""",
+              "Add hit and knockback to Divine Dash corridor"
+          )
+          replace_once(
+              """            BossBalance.applyTieredDamage(world, target, player.getDamageSources().playerAttack(player),
+                  GabrielEntity.CRASH_BASE_DAMAGE, BossBalance.AttackTier.ULTIMATE);""",
+              """            BossBalance.applyTieredDamage(world, target, player.getDamageSources().playerAttack(player),
+                  28.0f, BossBalance.AttackTier.ULTIMATE);""",
+              "Increase Divine Descent damage"
+          )
+          replace_once(
+              """            if (entity instanceof PlayerEntity player) {
+                      player.stopUsingItem();
+                      Vec3d locked = state.origin;""",
+              """            if (entity instanceof PlayerEntity player) {
+                      // Keep the player immobilized, but do not cancel item use (food, potions, etc.).
+                      Vec3d locked = state.origin;""",
+              "Allow stunned players to continue eating"
+          )
+          manager.write_text(source)
+
+          readme = Path("spartanboss_src/README-BALANCE-UPDATE.md")
+          readme_source = readme.read_text()
+          readme_source = readme_source.replace(
+              "Divine Descent uses Gabriel's existing 22 HP base crash-damage constant and the same ultimate-tier armor interaction as his boss crash (without the boss-only party damage multiplier).",
+              "Divine Descent deals 28 base damage and uses the ultimate-tier armor interaction (without the boss-only party damage multiplier)."
+          )
+          readme_source = readme_source.replace(
+              "Chaotic Chain Slash performs exactly three strikes (7/7/9 base damage);",
+              "Chaotic Chain Slash performs exactly three 9-damage strikes (Sharpness V equivalent), each with upward knockback;"
+          )
+          readme_source = readme_source.replace(
+              "Frost Dominion stuns ordinary targets for 5 seconds;",
+              "Frost Dominion stuns ordinary targets for 5 seconds without cancelling their item use;"
+          )
+          readme_source = readme_source.replace(
+              "Divine Dash travels up to 15 blocks. Divine Descent provides 5 seconds of controlled flight before its forced crash.",
+              "Divine Dash travels up to 15 blocks, damaging and knocking back targets along its path. Divine Descent provides 2 seconds of controlled flight before its forced crash and deals 28 base damage on impact."
+          )
+          readme.write_text(readme_source)
           PY
       - name: Set up Java 21
         uses: actions/setup-java@v4
