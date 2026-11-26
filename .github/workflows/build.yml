@@ -33,8 +33,8 @@ jobs:
           root = Path("spartanboss_src/src/main/java/com/kodari/spartanboss")
           hazard = root / "TemporaryHazardBlock.java"
           source = hazard.read_text()
-          source = source.replace("import net.minecraft.block.EntityCollisionHandler;\\n", "")
-          start = source.index("    @Override\\n    public void onSteppedOn")
+          source = source.replace("import net.minecraft.block.EntityCollisionHandler;" + chr(10), "")
+          start = source.index("    @Override" + chr(10) + "    public void onSteppedOn")
           replacement = """    @Override
               public void onSteppedOn(World world, BlockPos pos, BlockState state, Entity entity) {
                   if (!world.isClient()) {
