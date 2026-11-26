@@ -63,21 +63,6 @@ jobs:
           gzip -dc patches/spartanboss-rework.patch.gz > /tmp/spartanboss-rework.patch
           patch --batch --forward -p1 < /tmp/spartanboss-rework.patch
 
-      - name: Fix Minecraft 1.21.11 PvP API reference
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          manager = Path("spartanboss_src/src/main/java/com/kodari/spartanboss/WeaponAbilityManager.java")
-          source = manager.read_text()
-          old = "world.getServer().getPlayerManager().isPvpEnabled()"
-          new = "world.isPvpEnabled()"
-          count = source.count(old)
-          if count != 1:
-              raise SystemExit(f"Expected one outdated PvP API call, found {count}")
-          manager.write_text(source.replace(old, new, 1))
-          PY
-
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
